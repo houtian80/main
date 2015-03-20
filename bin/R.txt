@@ -1,0 +1,5 @@
+int attr type 0x7f010000
+int drawable sun 0x7f020000
+int id sun 0x7f030000
+int[] styleable RefreshView { 0x7f010000 }
+int styleable RefreshView_type 0
