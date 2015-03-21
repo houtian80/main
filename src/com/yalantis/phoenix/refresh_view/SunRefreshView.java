@@ -6,9 +6,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Animatable;
+import android.util.DisplayMetrics;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
@@ -38,15 +40,24 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
     
     private int mTop;
     private int mScreenWidth;
+    private int mScreenHight;
 
     private int mSunSize = 36;
+    private int mEmptySize = 36;
+    private int mEmptyHeight;
     private float mSunLeftOffset;
-    private float mSunTopOffset;
+    
+    private float mEmptyLeftOffset;
 
     private float mPercent = 0.0f;
     private float mRotate = 0.0f;
 
     private Bitmap mSun;
+    private Bitmap mEmpty;
+    
+    private Paint paintText;
+    private int textColor;
+    private int textSize;
 
     private boolean isRefreshing = false;
 
@@ -54,24 +65,32 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         super(context, parent);
         mParent = parent;
         mMatrix = new Matrix();
-
-        initiateDimens();
+        textColor = context.getResources().getColor(R.color.color_text);
+        textSize = context.getResources().getDimensionPixelOffset(R.dimen.text_size);
         createBitmaps();
+        initiateDimens();
+        
         setupAnimations();
     }
 
     private void initiateDimens() {
-        mScreenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
+    	DisplayMetrics disply = getContext().getResources().getDisplayMetrics();
+        mScreenWidth = disply.widthPixels;
+        mScreenHight = disply.heightPixels;
+        
+        mEmptyLeftOffset = (mScreenWidth - mEmptySize) / 2;
         mSkyHeight = (int) (SKY_RATIO * mScreenWidth);
         mSunLeftOffset = (mScreenWidth - mSunSize) / 2;
-        mSunTopOffset = (mParent.getTotalDragDistance() * 0.15f);
 
         mTop = -mParent.getTotalDragDistance();
     }
 
     private void createBitmaps() {
         mSun = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.sun);
+        mEmpty = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.empty_icon);
         mSunSize = mSun.getWidth();
+        mEmptySize = mEmpty.getWidth();
+        mEmptyHeight = mEmpty.getHeight();
     }
 
     @Override
@@ -91,6 +110,9 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         final int saveCount = canvas.save();
         canvas.translate(0, mTop);
         drawSun(canvas);
+        if(mParent.isListViewisEmpty()){
+        	drawEmpty(canvas);
+        }
         canvas.restoreToCount(saveCount);
     }
    
@@ -108,9 +130,12 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
         float sunRotateGrowth = SUN_INITIAL_ROTATE_GROWTH;
 
         float offsetX = mSunLeftOffset;
-        float offsetY = mSunTopOffset + (mParent.getTotalDragDistance() / 2) * (1.0f - dragPercent) // Move the sun up
-                - mTop; // Depending on Canvas position
+        float offsetY = (mParent.getTotalDragDistance() / 2)  + mTop; // Depending on Canvas position
 
+        if(offsetY > 27){
+        	offsetY = 27;
+        }
+        
         matrix.postTranslate(offsetX, offsetY);
 
         offsetX += sunRadius;
@@ -118,6 +143,31 @@ public class SunRefreshView extends BaseRefreshView implements Animatable {
 
         matrix.postRotate((isRefreshing ? -360 : 360) * mRotate * (isRefreshing ? 1 : sunRotateGrowth), offsetX, offsetY);
         canvas.drawBitmap(mSun, matrix, null);
+    }
+    
+    private void drawEmpty(Canvas canvas) {
+        Matrix matrix = mMatrix;
+        matrix.reset();
+
+        float offsetX = mEmptyLeftOffset;
+        float offsetY = mScreenHight / 3 + (mParent.getTotalDragDistance() / 2); 
+
+        matrix.postTranslate(offsetX, offsetY);
+
+        canvas.drawBitmap(mEmpty, matrix, null);
+        
+        String emptyString = mParent.getEmptyString();
+        if(emptyString != null){
+        	if(paintText == null){
+            	paintText = new Paint(Paint.ANTI_ALIAS_FLAG);  
+            	paintText.setTextSize(textSize);
+            	paintText.setColor(textColor);
+            }
+        	
+        	float textLength = paintText.measureText(emptyString);  
+            canvas.drawText(emptyString, (mScreenWidth - textLength) / 2 , offsetY + mEmptyHeight + textSize * 2, paintText);
+        }
+        
     }
 
     public void setPercent(float percent) {

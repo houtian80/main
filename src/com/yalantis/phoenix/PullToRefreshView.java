@@ -1,5 +1,7 @@
 package com.yalantis.phoenix;
 
+import java.security.InvalidParameterException;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
@@ -20,8 +22,6 @@ import android.widget.ImageView;
 import com.yalantis.phoenix.refresh_view.BaseRefreshView;
 import com.yalantis.phoenix.refresh_view.SunRefreshView;
 import com.yalantis.phoenix.util.Utils;
-
-import java.security.InvalidParameterException;
 
 public class PullToRefreshView extends ViewGroup {
 
@@ -52,6 +52,8 @@ public class PullToRefreshView extends ViewGroup {
     private OnRefreshListener mListener;
     
     private long refreshTime;
+    private boolean listViewisEmpty;
+    private String emptyString;
 
     public PullToRefreshView(Context context) {
         this(context, null);
@@ -92,6 +94,7 @@ public class PullToRefreshView extends ViewGroup {
     public int getTotalDragDistance() {
         return mTotalDragDistance;
     }
+    
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -425,5 +428,22 @@ public class PullToRefreshView extends ViewGroup {
     public static interface OnRefreshListener {
         public void onRefresh();
     }
+
+	public boolean isListViewisEmpty() {
+		return listViewisEmpty;
+	}
+
+	public void setListViewisEmpty(boolean listViewisEmpty) {
+		this.listViewisEmpty = listViewisEmpty;
+	}
+
+	public String getEmptyString() {
+		return emptyString;
+	}
+
+	public void setEmptyString(String emptyString) {
+		this.emptyString = emptyString;
+	}
+
 
 }
